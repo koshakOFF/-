@@ -4,7 +4,7 @@ from bitarray import bitarray
 window_size = 64 # razmer skol'zyashchego okna
 buffer_size = 15 # dlina sovpadeniya ne boleye 4 bit
 
-def delete_last_line(file_path): # Funktsiya udaleniya posledney stroki, v kotoroy v arkhivirovannom fayle khranitsya rasshireniye starogo fayla
+def delete_last_line(file_path): 
     file = open(file_path, "rb+")
     file_extension = file.readlines()[-1].decode()
     for i in range(len(file_extension)+1):
@@ -14,32 +14,32 @@ def delete_last_line(file_path): # Funktsiya udaleniya posledney stroki, v kotor
 
 def compress(file_path):
 	filename, file_extension = os.path.splitext(file_path)
-	output_file_path=f"{filename}Compressed.txt" # Imya fayla, kotoryy budet v itoge vyveden
+	output_file_path=f"{filename}Compressed.txt" 
 	data = None
 	i = 0
-	buffer = bitarray(endian='big')# Predstavlyayem bufer kak posledovatel'nost' bit
+	buffer = bitarray(endian='big')
 
 	with open(file_path, 'rb') as input_file: # Schityvayem fayl
 		data = input_file.read()
 
 	while i < len(data):
 		match = findLongestMatch(data, i)
-		if match: # Dobavlyayem 1 bitovyy flag, zatem 12 bit dlya rasstoyaniya i 4 bita dlya dliny sovpadeniya.
+		if match: 
 			(MatchDistance, MatchLength) = match
 			buffer.append(True)
 			buffer.frombytes(bytes([MatchDistance >> 4]))
 			buffer.frombytes(bytes([((MatchDistance & 0xf) << 4) | MatchLength]))
 			i += MatchLength
-		else: # Yesli ne naydeno ni odnogo poleznogo sovpadeniya, dobavim 0-bitnyy flag, a zatem 8-bitnyy dlya simvola
+		else: 
 			buffer.append(False)
 			buffer.frombytes(bytes([data[i]]))
 			i += 1
             
-	buffer.fill() # Zapolnyayem bufer nulyami yesli kolichestvo bit ne kratno 8
+	buffer.fill() 
 
-	with open(output_file_path, 'wb') as output_file: # Zapisat' szhatyye dannyye v fayl
+	with open(output_file_path, 'wb') as output_file: 
 		output_file.write(buffer.tobytes())        
-		output_file.write(b'\n'+file_extension.encode()) # Zapishem rasshireniye iznachal'nogo fayla v szhatyye dannyye
+		output_file.write(b'\n'+file_extension.encode()) 
 	return buffer   
 
 def decompress(file_path):
@@ -47,11 +47,11 @@ def decompress(file_path):
     data = bitarray(endian='big')
     output_buffer = []
 
-    with open(file_path, 'rb') as input_file: # Schityvayem fayl
+    with open(file_path, 'rb') as input_file:
         file_extension = delete_last_line(file_path)
         data.fromfile(input_file)
 
-    while len(data) >= 9: # Realizatsiya algoritma LZ77
+    while len(data) >= 9:
     	flag = data.pop(0)
     	if not flag:
     		byte = data[0:8].tobytes()
@@ -74,8 +74,6 @@ def decompress(file_path):
     return out_data
     
 def findLongestMatch(data, current_position):
-	# Nakhodit samoye dlinnoye sovpadeniye s podstrokoy, nachinaya s current_position v 
-    # predvaritel'nom bufere iz okna istorii
 	end_of_buffer = min(current_position + buffer_size, len(data) + 1)
 	best_match_distance = -1
 	best_match_length = -1
